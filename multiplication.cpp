@@ -1,21 +1,15 @@
-#include <iostream>
-#include <ctime>
+#define _CRT_RAND_S // rand_s
+#include <stdlib.h> // rand_s
+#include <iostream> // cout
+#include <ctime>    // clock
 #include <cstdlib>
-#include <cstring>
 using namespace std;
 
-#define BASE 32767    // base of the numerical notation
+#define BASE UINT_MAX    // base of the numerical notation. UINT_MAX == 4,294,967,295
 #define MIN_LENGTH_FOR_KARATSUBA 4    // if the number is shorter, it won't be multiplied using Karatsuba method
-typedef int digit;    // type of one digit in the chosen numerical notation to accomodate tha max value of BASE
-typedef long long int double_digit;    // type to accomodate tha max value of BASE*BASE
+typedef unsigned int digit;    // type of one digit in the chosen numerical notation to accomodate tha max value of BASE
+typedef unsigned long long int double_digit;    // type to accomodate tha max value of BASE*BASE
 
-
-// Measures execution time
-static inline uint64_t get_cycles() {
-  uint64_t t;
-  __asm__ __volatile__ ("rdtsc" : "=A"(t));
-  return t;
-}
 
 
 /* Struct to store long numbers in the chosen numerical notation */
@@ -57,6 +51,7 @@ struct LongNumber {
   // 1. Increases the length by n
   // 2. "Shifts" value by n digits
   // 3. Fills n empty digits (val[0...n-1]) with zeros
+  // For example, if BASE == 10 && x.val == {3,2,1}, then x.shift(3) makes x.val == {0,0,0,3,2,1}
   void shift(size_t n) {
     digit* temp = new digit[len + n];
     memset(temp, 0, n * sizeof(val));
@@ -255,11 +250,12 @@ void print(LongNumber number) {
 
 
 // Returns a LongNumber where all digits are filled with random numbers not greater than BASE
-// The max value of random numbers equals to the max return value of rand(), which is is 32767
 LongNumber generateRandom(size_t length) {  
   LongNumber result(length);
+  digit random_number;
   for (int i = 0; i < length; ++i) {
-    result.val[i] = rand() % BASE;
+    rand_s(&random_number);
+    result.val[i] = random_number % BASE;
   }
   return result;
 }
@@ -269,29 +265,30 @@ LongNumber generateRandom(size_t length) {
 
 int main(int argc, char** argv) {
   
-  LongNumber number1(1000), number2(1000);
+  LongNumber numberA(5000), numberB(5000);
 
-  srand(time(NULL)); // initialize random numbers generator
-  number1 = generateRandom(number1.len);
-  number2 = generateRandom(number2.len);
-
+  numberA = generateRandom(numberA.len);
+  numberB = generateRandom(numberB.len);
+  
+  cout << "UINT_MAX = " << UINT_MAX << "\n";
   cout << "BASE = " << BASE << "\n";
-  cout << "Length 1 = " << number1.len << "; length 2 = " << number2.len << "\n";
-  // print(number1);
-  // cout << " * \n";
-  // print(number2);
-  // cout << " = \n";
+  
+  cout << "Length A = " << numberA.len << "; length B = " << numberB.len << "\n";
+   //print(numberA);
+   //cout << " * \n";
+   //print(numberB);
+   //cout << " = \n";
 
   cout << "Method 1. Naive multiplication.\n";
-  uint64_t start = get_cycles();
-  naive_multiply(number1, number2);
-  uint64_t naive_elapsed = get_cycles() - start;
+  clock_t start = clock();
+  naive_multiply(numberA, numberB);
+  double naive_elapsed = (double)(clock() - start) / CLOCKS_PER_SEC;
   cout << "Elapsed time: " << naive_elapsed << "\n";
 
   cout << "Method 2. Karatsuba multiplication.\n";
-  start = get_cycles();
-  karatsuba_multiply(number1, number2);
-  uint64_t karats_elapsed = get_cycles() - start;
+  start = clock();
+  karatsuba_multiply(numberA, numberB);
+  double karats_elapsed = (double)(clock() - start) / CLOCKS_PER_SEC;
   cout << "Elapsed time: " << karats_elapsed << "\n";
 
   if (naive_elapsed > karats_elapsed) {
