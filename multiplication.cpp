@@ -8,7 +8,7 @@ using namespace std;
 #define BASE UINT_MAX    // base of the numerical notation. UINT_MAX == 4,294,967,295
 #define MIN_LENGTH_FOR_KARATSUBA 4    // if the number is shorter, it won't be multiplied using Karatsuba method
 #define N_TESTS 3
-#define NUMBERS_LENGTH 5000
+#define NUMBERS_LENGTH 10000
 typedef unsigned int digit;    // type of one digit in the chosen numerical notation to accomodate tha max value of BASE
 typedef unsigned long long int double_digit;    // type to accomodate tha max value of BASE*BASE
 
@@ -34,10 +34,18 @@ struct LongNumber {
 
   // Copy-constructor
   LongNumber(const LongNumber &obj) {
-    len = obj.len;
-    val = new digit[len];
-    memcpy(val, obj.val, sizeof(val) * len);
+    this->len = obj.len;
+    this->val = new digit[len];
+    memcpy(this->val, obj.val, sizeof(val) * len);
   }
+
+	// Move-constructor
+	LongNumber(LongNumber &&obj) {
+		this->len = obj.len;
+		this->val = obj.val;
+		obj.len = 0;
+		obj.val = nullptr;
+	}
 
   LongNumber& operator = (LongNumber& obj) {
     if (val) delete[] val;
